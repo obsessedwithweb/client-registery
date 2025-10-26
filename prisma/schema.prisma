@@ -1,0 +1,75 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated"
+}
+
+generator zod {
+  provider = "zod-prisma-types"
+  output   = "../src/schema/generated"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id      String     @id @default(cuid())
+  name    String     @db.VarChar(255)
+  slug    String     @unique @db.VarChar(255)
+  gender  Gender     @default(MALE)
+  type    ClientType @default(INDIVIDUAL)
+  phone   String     @unique @db.VarChar(15)
+  email   String     @unique
+  address String     @db.VarChar(100)
+  image   String?    @db.Text
+
+  //* Social links
+  telegram  String?
+  whatsapp  String?
+  facebook  String?
+  instagram String?
+
+  //? Project(s) table
+  project Project[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Project {
+  id               Int    @id @default(autoincrement())
+  title            String @db.VarChar(255)
+  description      String @db.Text
+  status           Status @default(PLANNED)
+  assignedClientId String @db.VarChar(255)
+  assignedClient   Client @relation(fields: [assignedClientId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum ClientType {
+  INDIVIDUAL
+  COMPANY
+}
+
+enum Status {
+  PLANNED // project idea or upcoming
+  IN_PROGRESS // work is ongoing
+  ON_HOLD // temporarily paused
+  REVIEW // waiting for client review
+  COMPLETED // successfully finished
+  CANCELLED // abandoned or terminated
+}
